@@ -1,6 +1,8 @@
 package com.example.wordle;
 
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -27,21 +29,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Inicializamos WordLoader
         wordLoader = new WordLoader(this);
 
-        // EditText de letras
         letra1 = findViewById(R.id.letra1);
         letra2 = findViewById(R.id.letra2);
         letra3 = findViewById(R.id.letra3);
         letra4 = findViewById(R.id.letra4);
         letra5 = findViewById(R.id.letra5);
 
-        // TextView score y record
+        setupAutoFocus();//inicializar el salto automatico
+
         counter = findViewById(R.id.counter);
         record = findViewById(R.id.record);
 
-        // Botones
         nuevaPalabra = findViewById(R.id.change);
         validar = findViewById(R.id.button);
 
@@ -148,5 +148,30 @@ public class MainActivity extends AppCompatActivity {
         if (recordIntentos != Integer.MAX_VALUE) {
             record.setText("RECORD:  " + recordIntentos);
         }
+    }
+
+    private void setupAutoFocus(){
+        setAutoMove(letra1,letra2);
+        setAutoMove(letra2,letra3);
+        setAutoMove(letra3,letra4);
+        setAutoMove(letra4,letra5);
+
+    }
+    //metodo para ir saltando automaticamete de editText en editText
+    private void setAutoMove(EditText actual, EditText siguiente) {
+        actual.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() == 1) {
+                    siguiente.requestFocus();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
     }
 }

@@ -3,6 +3,8 @@ package com.example.wordle;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.KeyEvent;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -31,11 +33,19 @@ public class MainActivity extends AppCompatActivity {
 
         wordLoader = new WordLoader(this);
 
+        //encontrar por id
         letra1 = findViewById(R.id.letra1);
         letra2 = findViewById(R.id.letra2);
         letra3 = findViewById(R.id.letra3);
         letra4 = findViewById(R.id.letra4);
         letra5 = findViewById(R.id.letra5);
+
+        //validar con la tecla enter
+        letra1.setOnKeyListener(enterListener);
+        letra2.setOnKeyListener(enterListener);
+        letra3.setOnKeyListener(enterListener);
+        letra4.setOnKeyListener(enterListener);
+        letra5.setOnKeyListener(enterListener);
 
         setupAutoFocus();//inicializar el salto automatico
 
@@ -174,4 +184,13 @@ public class MainActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
     }
+
+    //metodo para validar con la tecla enter con KeyEvent
+    View.OnKeyListener enterListener = (v, keyCode, event) -> {
+        if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+            validaPalabra();
+            return true;
+        }
+        return false;
+    };
 }

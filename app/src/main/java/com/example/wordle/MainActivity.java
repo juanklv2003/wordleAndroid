@@ -1,6 +1,8 @@
 package com.example.wordle;
 
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
@@ -81,8 +83,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void validaPalabra() {
-        intentos++; // Incrementar intentos
-        actualizarScore(); // Mostrar en el TextView
+        vibrar(100);//llamamos al metodo vibrar
+        intentos++;
+        actualizarScore();
 
         String l1 = letra1.getText().toString().toUpperCase();
         String l2 = letra2.getText().toString().toUpperCase();
@@ -193,4 +196,12 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     };
+
+    //funcion para vibrar al validar palabra con vibrator
+    private void vibrar(int milisegundos) {
+        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        if (vibrator != null) {
+            vibrator.vibrate(VibrationEffect.createOneShot(milisegundos, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+    }
 }

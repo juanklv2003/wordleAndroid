@@ -87,8 +87,12 @@ public class MainActivity extends AppCompatActivity {
 
     private void actualizarVidas() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < vidas; i++) {
-            sb.append("❤️");
+        for (int i = 0; i < 6; i++) {
+            if (i < vidas) {
+                sb.append("❤️");
+            } else {
+                sb.append("🤍");
+            }
         }
         tvVidas.setText(sb.toString());
     }
@@ -99,12 +103,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (palabraSecreta != null) {
             Toast.makeText(this, "Nueva palabra cargada " + palabraSecreta, Toast.LENGTH_SHORT).show();
-            limpiarCasillas();     // Limpia inputs
-            intentos = 0;          // Reinicia intentos
-            vidas = 6;             // Reinicia vidas (si usas vidas)
-            actualizarScore();     // Actualiza UI (vidas, intentos, puntaje...)
+            intentos = 0;
+            vidas = 6;
+            actualizarVidas();
+            limpiarCasillas();
+            actualizarScore();
 
-            bloquearUI(false);   // Permite jugar
+            bloquearUI(false);
         } else {
             Toast.makeText(this, "Error cargando palabras", Toast.LENGTH_SHORT).show();
         }
@@ -115,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (EditText txt : letras) {
             txt.setText("");
-            txt.setBackgroundColor(Color.WHITE);               // Resetea color a blanco (o el que uses por defecto)
+            txt.setBackgroundColor(Color.WHITE);
 
         }
 
@@ -126,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         vibrar(100);
         if (palabraSecreta == null || palabraSecreta.length() != 5) {
             Toast.makeText(this, "Primero pulsa 'Nueva Palabra'", Toast.LENGTH_SHORT).show();
-            intentos--; // Para no contar intento inválido
+            intentos--;
             actualizarScore();
             return;
         }
@@ -144,6 +149,10 @@ public class MainActivity extends AppCompatActivity {
 
         intentos++;
         vidas--;
+        if (vidas == 0) {
+            mostrarGameOver();
+            return;
+        }
         actualizarVidas();
         actualizarScore();
 
@@ -252,8 +261,6 @@ public class MainActivity extends AppCompatActivity {
         nuevaPalabra.setEnabled(!bloquear);
     }
 
-
-
     private EditText getEditTextPorIndice(int i) {
         switch (i) {
             case 0:
@@ -334,5 +341,7 @@ public class MainActivity extends AppCompatActivity {
             return false;
         });
     }
+
+
 
 }

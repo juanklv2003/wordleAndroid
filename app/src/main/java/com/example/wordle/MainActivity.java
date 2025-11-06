@@ -1,6 +1,9 @@
 package com.example.wordle;
 
+import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.text.Editable;
@@ -20,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+
 public class MainActivity extends AppCompatActivity {
 
     private RecyclerView recycler;
@@ -35,6 +39,11 @@ public class MainActivity extends AppCompatActivity {
     private int intentos = 0;
     private int recordIntentos = Integer.MAX_VALUE;
 
+    //vidas
+    private int vidas = 6;
+    private TextView tvVidas;
+
+
     private TextView counter, record;
 
     @Override
@@ -49,6 +58,9 @@ public class MainActivity extends AppCompatActivity {
         letra3 = findViewById(R.id.letra3);
         letra4 = findViewById(R.id.letra4);
         letra5 = findViewById(R.id.letra5);
+        tvVidas = findViewById(R.id.tvVidas);
+        actualizarVidas();
+
 
         recycler = findViewById(R.id.recycler);
         recycler.setLayoutManager(new LinearLayoutManager(this));
@@ -73,14 +85,26 @@ public class MainActivity extends AppCompatActivity {
         validar.setOnClickListener(v -> validaPalabra());
     }
 
+    private void actualizarVidas() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < vidas; i++) {
+            sb.append("❤️");
+        }
+        tvVidas.setText(sb.toString());
+    }
+
+
     private void cargarNuevaPalabra() {
         palabraSecreta = wordLoader.getRandomWord();
 
         if (palabraSecreta != null) {
-            Toast.makeText(this, "Nueva palabra cargada", Toast.LENGTH_SHORT).show();
-            limpiarCasillas();
-            intentos = 0;
-            actualizarScore();
+            Toast.makeText(this, "Nueva palabra cargada " + palabraSecreta, Toast.LENGTH_SHORT).show();
+            limpiarCasillas();     // Limpia inputs
+            intentos = 0;          // Reinicia intentos
+            vidas = 6;             // Reinicia vidas (si usas vidas)
+            actualizarScore();     // Actualiza UI (vidas, intentos, puntaje...)
+
+            bloquearUI(false);   // Permite jugar
         } else {
             Toast.makeText(this, "Error cargando palabras", Toast.LENGTH_SHORT).show();
         }
@@ -91,7 +115,8 @@ public class MainActivity extends AppCompatActivity {
 
         for (EditText txt : letras) {
             txt.setText("");
-            txt.setBackgroundColor(getResources().getColor(android.R.color.white));
+            txt.setBackgroundColor(Color.WHITE);               // Resetea color a blanco (o el que uses por defecto)
+
         }
 
         letra1.requestFocus();
@@ -118,6 +143,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         intentos++;
+        vidas--;
+        actualizarVidas();
         actualizarScore();
 
         List<String> colores = new ArrayList<>(Arrays.asList("", "", "", "", ""));
@@ -155,6 +182,16 @@ public class MainActivity extends AppCompatActivity {
                     colores.set(i, "gris");
                 }
             }
+            if (intento.equals(palabraSecreta)) {
+                mostrarVictoria();
+                return;
+            }
+
+
+            if (vidas == 0) {
+                mostrarGameOver();
+                return;
+            }
         }
 
         Attempt attemptObj = new Attempt(intento, colores);
@@ -173,14 +210,62 @@ public class MainActivity extends AppCompatActivity {
             actualizarScore();
         }
     }
+    private void mostrarVictoria() {
+        // 1. Bloquear UI
+        bloquearUI(true);
+
+
+        Toast.makeText(this, "¡Has acertado! 🎉", Toast.LENGTH_SHORT).show();
+
+        // 3. Esperar 3 segundos antes de permitir continuar
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+
+            // 4. Desbloquear UI
+            bloquearUI(false);
+
+            // 5. Activar botón "Nueva Palabra"
+            nuevaPalabra.setVisibility(View.VISIBLE);
+            nuevaPalabra.setEnabled(true);
+
+        }, 3000); // 3000ms = 3s
+    }
+    private void mostrarGameOver() {
+
+        bloquearUI(true);
+
+        Toast.makeText(this, "GAME OVER ❌\nLa palabra era: " + palabraSecreta, Toast.LENGTH_LONG).show();
+
+
+        nuevaPalabra.setVisibility(View.VISIBLE);
+        nuevaPalabra.setEnabled(true);
+    }
+
+    //metodo para bloquearUI
+    private void bloquearUI(boolean bloquear) {
+        letra1.setEnabled(!bloquear);
+        letra2.setEnabled(!bloquear);
+        letra3.setEnabled(!bloquear);
+        letra4.setEnabled(!bloquear);
+        letra5.setEnabled(!bloquear);
+
+        validar.setEnabled(!bloquear);
+        nuevaPalabra.setEnabled(!bloquear);
+    }
+
+
 
     private EditText getEditTextPorIndice(int i) {
         switch (i) {
-            case 0: return letra1;
-            case 1: return letra2;
-            case 2: return letra3;
-            case 3: return letra4;
-            default: return letra5;
+            case 0:
+                return letra1;
+            case 1:
+                return letra2;
+            case 2:
+                return letra3;
+            case 3:
+                return letra4;
+            default:
+                return letra5;
         }
     }
 
@@ -194,20 +279,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setupAutoFocus() {
-        setAutoMove(letra1, letra2);
-        setAutoMove(letra2, letra3);
-        setAutoMove(letra3, letra4);
-        setAutoMove(letra4, letra5);
-    }
-
     private void setAutoMove(EditText actual, EditText siguiente) {
         actual.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 if (s.length() == 1) siguiente.requestFocus();
             }
-            @Override public void afterTextChanged(Editable s) {}
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
         });
     }
 
@@ -224,4 +309,30 @@ public class MainActivity extends AppCompatActivity {
         if (vibrator != null)
             vibrator.vibrate(VibrationEffect.createOneShot(ms, VibrationEffect.DEFAULT_AMPLITUDE));
     }
+
+    private void setupAutoFocus() {
+        setAutoMove(letra1, letra2);
+        setAutoMove(letra2, letra3);
+        setAutoMove(letra3, letra4);
+        setAutoMove(letra4, letra5);
+
+        setAutoBackspace(letra2, letra1);
+        setAutoBackspace(letra3, letra2);
+        setAutoBackspace(letra4, letra3);
+        setAutoBackspace(letra5, letra4);
+    }
+
+    private void setAutoBackspace(EditText actual, EditText anterior) {
+        actual.setOnKeyListener((v, keyCode, event) -> {
+            if (keyCode == KeyEvent.KEYCODE_DEL && event.getAction() == KeyEvent.ACTION_DOWN) {
+                if (actual.getText().length() == 0) {
+                    anterior.requestFocus();
+                    anterior.setText(""); // borra la letra anterior
+                    return true;
+                }
+            }
+            return false;
+        });
+    }
+
 }

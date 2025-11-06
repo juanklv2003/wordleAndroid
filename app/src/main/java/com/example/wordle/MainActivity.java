@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         palabraSecreta = wordLoader.getRandomWord();
 
         if (palabraSecreta != null) {
-            Toast.makeText(this, "Nueva palabra cargada " + palabraSecreta, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Nueva palabra cargada", Toast.LENGTH_SHORT).show();
             intentos = 0;
             vidas = 6;
             actualizarVidas();
@@ -111,6 +111,8 @@ public class MainActivity extends AppCompatActivity {
             actualizarScore();
 
             bloquearUI(false);
+            listaIntentos.clear();
+            adapter.notifyDataSetChanged();
         } else {
             Toast.makeText(this, "Error cargando palabras", Toast.LENGTH_SHORT).show();
         }

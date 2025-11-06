@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
 
         nuevaPalabra.setOnClickListener(v -> cargarNuevaPalabra());
         validar.setOnClickListener(v -> validaPalabra());
+        cargarNuevaPalabra();
     }
 
     private void actualizarVidas() {
@@ -129,12 +130,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void validaPalabra() {
         vibrar(100);
-        if (palabraSecreta == null || palabraSecreta.length() != 5) {
-            Toast.makeText(this, "Primero pulsa 'Nueva Palabra'", Toast.LENGTH_SHORT).show();
-            intentos--;
-            actualizarScore();
-            return;
-        }
 
         String intento = (letra1.getText().toString() +
                 letra2.getText().toString() +
@@ -220,23 +215,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void mostrarVictoria() {
-        // 1. Bloquear UI
+        // Bloquear la UI mientras se muestra el diálogo
         bloquearUI(true);
 
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("GRANDE ACERTASTE!!!!")
+                .setCancelable(false)
+                .setPositiveButton("NEW WORD", (dialog, which) -> {
 
-        Toast.makeText(this, "¡Has acertado! 🎉", Toast.LENGTH_SHORT).show();
+                    nuevaPalabra.setVisibility(View.VISIBLE);
+                    nuevaPalabra.setEnabled(true);
+                    cargarNuevaPalabra();
 
-        // 3. Esperar 3 segundos antes de permitir continuar
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-
-            // 4. Desbloquear UI
-            bloquearUI(false);
-
-            // 5. Activar botón "Nueva Palabra"
-            nuevaPalabra.setVisibility(View.VISIBLE);
-            nuevaPalabra.setEnabled(true);
-
-        }, 3000); // 3000ms = 3s
+                    // Desbloquear UI
+                    bloquearUI(false);
+                    dialog.dismiss();
+                })
+                .show();
     }
     private void mostrarGameOver() {
         // Bloquear la UI mientras se muestra el diálogo

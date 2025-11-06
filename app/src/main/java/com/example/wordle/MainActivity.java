@@ -239,14 +239,24 @@ public class MainActivity extends AppCompatActivity {
         }, 3000); // 3000ms = 3s
     }
     private void mostrarGameOver() {
-
+        // Bloquear la UI mientras se muestra el diálogo
         bloquearUI(true);
 
-        Toast.makeText(this, "GAME OVER ❌\nLa palabra era: " + palabraSecreta, Toast.LENGTH_LONG).show();
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("GAME OVER ❌")
+                .setMessage("\nLa palabra era: " + palabraSecreta)
+                .setCancelable(false) // No se puede cerrar tocando fuera
+                .setPositiveButton("NEW WORD", (dialog, which) -> {
+                    // Habilitar botón nueva palabra
+                    nuevaPalabra.setVisibility(View.VISIBLE);
+                    nuevaPalabra.setEnabled(true);
+                    cargarNuevaPalabra();
 
-
-        nuevaPalabra.setVisibility(View.VISIBLE);
-        nuevaPalabra.setEnabled(true);
+                    // Desbloquear UI
+                    bloquearUI(false);
+                    dialog.dismiss();
+                })
+                .show();
     }
 
     //metodo para bloquearUI

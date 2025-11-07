@@ -54,6 +54,12 @@ public class AttemptAdapter extends RecyclerView.Adapter<AttemptAdapter.ViewHold
         return listaIntentos.size();
     }
 
+    public void updateList(List<Attempt> nuevaLista) {
+        this.listaIntentos.clear();
+        this.listaIntentos.addAll(nuevaLista);
+        notifyDataSetChanged();
+    }
+
     private void setColor(View cell, String colorName) {
         int color;
 

@@ -9,6 +9,8 @@ import android.os.Vibrator;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
+// Agregamos estos IMPORTS necesarios para el Custom Toast:
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -54,16 +56,13 @@ public class MainActivity extends AppCompatActivity {
 
         wordLoader = new WordLoader(this);
 
-        // 1. Inicializar vistas (DEBE SER PRIMERO para evitar NullPointer en la carga)
         initViews();
         setupRecyclerView();
         setupListeners();
 
-        // 2. Cargar estado que usa las vistas
         cargarRecord();
         cargarEstado();
 
-        // Lógica de inicio
         if (palabraSecreta == null || palabraSecreta.isEmpty()) {
             cargarNuevaPalabra();
         } else {
@@ -71,6 +70,26 @@ public class MainActivity extends AppCompatActivity {
             actualizarVidas();
         }
     }
+
+    // --- MÉTODO PARA MOSTRAR EL TOAST PERSONALIZADO ---
+    private void showCustomToast(String message) {
+        // Inflar el diseño personalizado del toast (custom_toast.xml)
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.custom_toast,
+                findViewById(R.id.custom_toast_container));
+
+        // Encontrar el TextView y establecer el mensaje
+        TextView text = layout.findViewById(R.id.toast_text);
+        text.setText(message);
+
+        // Crear y mostrar el Toast
+        Toast toast = new Toast(getApplicationContext());
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setView(layout);
+        toast.show();
+    }
+    // ----------------------------------------------------
+
 
     private void initViews() {
         letra1 = findViewById(R.id.letra1);
@@ -94,21 +113,19 @@ public class MainActivity extends AppCompatActivity {
 
     // Listener de acción del editor (Enter/Next/Done del teclado virtual)
     private final TextView.OnEditorActionListener editorListener = (v, actionId, event) -> {
-        // Verificar si la acción es Next o Done (depende de la configuración XML)
         if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
             validaPalabra();
 
-            // Ocultar el teclado después de validar para una mejor UX
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
-            return true; // El evento ha sido manejado
+            return true;
         }
         return false;
     };
 
-    // Listener de tecla (Aún se mantiene para teclados físicos o ciertos comportamientos)
+    // Listener de tecla (para teclados físicos o fallbacks)
     private final View.OnKeyListener enterListener = (v, keyCode, event) -> {
         if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
             validaPalabra();
@@ -125,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
         letra4.setOnEditorActionListener(editorListener);
         letra5.setOnEditorActionListener(editorListener);
 
-        // Mantenemos OnKeyListener (para teclados físicos o fallbacks)
+        // Mantenemos OnKeyListener (teclados físicos)
         letra1.setOnKeyListener(enterListener);
         letra2.setOnKeyListener(enterListener);
         letra3.setOnKeyListener(enterListener);
@@ -150,7 +167,9 @@ public class MainActivity extends AppCompatActivity {
         palabraSecreta = wordLoader.getRandomWord();
 
         if (palabraSecreta != null && !palabraSecreta.isEmpty()) {
-            Toast.makeText(this, "Nueva palabra cargada", Toast.LENGTH_SHORT).show();
+            // REEMPLAZO 1
+            showCustomToast("Nueva palabra cargada");
+
             intentos = 0;
             vidas = 6;
             actualizarVidas();
@@ -161,7 +180,8 @@ public class MainActivity extends AppCompatActivity {
             listaIntentos.clear();
             adapter.notifyDataSetChanged();
         } else {
-            Toast.makeText(this, "Error cargando palabras", Toast.LENGTH_SHORT).show();
+            // REEMPLAZO 2
+            showCustomToast("Error cargando palabras");
         }
     }
 
@@ -186,7 +206,8 @@ public class MainActivity extends AppCompatActivity {
                 letra5.getText().toString()).toUpperCase();
 
         if (intento.length() != 5) {
-            Toast.makeText(this, "Escribe 5 letras", Toast.LENGTH_SHORT).show();
+            // REEMPLAZO 3
+            showCustomToast("Escribe 5 letras");
             return;
         }
 
@@ -214,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
         char[] secreto = palabraSecreta.toCharArray();
         char[] intentoArray = intento.toCharArray();
 
-        // 1. Marcar VERDES (Posición y letra correctas)
+        // 1. Marcar VERDES
         for (int i = 0; i < 5; i++) {
             if (intentoArray[i] == secreto[i]) {
                 colores.set(i, "verde");
@@ -223,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 2. Marcar AMARILLOS (Letra correcta, posición incorrecta) y GRISES (Letra incorrecta)
+        // 2. Marcar AMARILLOS y GRISES
         for (int i = 0; i < 5; i++) {
             if (intentoArray[i] != '*') {
                 boolean encontrada = false;
@@ -262,10 +283,12 @@ public class MainActivity extends AppCompatActivity {
             actualizarRecord();
         }
 
-        Toast.makeText(this, "¡Correcto en " + intentos + " intentos!", Toast.LENGTH_LONG).show();
+        // REEMPLAZO 4
+        showCustomToast("¡Correcto en " + intentos + " intentos!");
+
         bloquearUI(true);
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("🎉 GRANDE ACERTASTE!!!! 🎉")
+                .setTitle("GRANDE ACERTASTE!!!!")
                 .setCancelable(false)
                 .setPositiveButton("NEW WORD", (dialog, which) -> {
                     cargarNuevaPalabra();
@@ -278,7 +301,7 @@ public class MainActivity extends AppCompatActivity {
     private void mostrarGameOver() {
         bloquearUI(true);
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("GAME OVER ❌")
+                .setTitle("GAME OVER")
                 .setMessage("\nLa palabra era: " + palabraSecreta)
                 .setCancelable(false)
                 .setPositiveButton("NEW WORD", (dialog, which) -> {

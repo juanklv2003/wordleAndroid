@@ -1,15 +1,18 @@
+// El código Java ha sido actualizado para eliminar referencias a los botones de CHECK y CHANGE WORD
+// y utiliza showCustomToast() en lugar de Toast.makeText().
+
 package com.example.wordle;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.media.MediaPlayer; // Nuevo import
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
-// Agregamos estos IMPORTS necesarios para el Custom Toast:
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -38,7 +41,6 @@ public class MainActivity extends AppCompatActivity {
     private final ArrayList<Attempt> listaIntentos = new ArrayList<>();
 
     private String palabraSecreta = "";
-    private Button nuevaPalabra, validar;
     private WordLoader wordLoader;
 
     private EditText letra1, letra2, letra3, letra4, letra5;
@@ -49,6 +51,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvVidas;
     private TextView counter, record;
 
+    // Objeto MediaPlayer para la música de fondo
+    private MediaPlayer mediaPlayer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,13 +61,19 @@ public class MainActivity extends AppCompatActivity {
 
         wordLoader = new WordLoader(this);
 
+        // 1. Inicializar vistas (DEBE SER PRIMERO para evitar NullPointer en la carga)
         initViews();
         setupRecyclerView();
         setupListeners();
 
+        // 2. Configurar música de fondo
+        setupMusic();
+
+        // 3. Cargar estado que usa las vistas
         cargarRecord();
         cargarEstado();
 
+        // Lógica de inicio
         if (palabraSecreta == null || palabraSecreta.isEmpty()) {
             cargarNuevaPalabra();
         } else {
@@ -70,26 +81,6 @@ public class MainActivity extends AppCompatActivity {
             actualizarVidas();
         }
     }
-
-    // --- MÉTODO PARA MOSTRAR EL TOAST PERSONALIZADO ---
-    private void showCustomToast(String message) {
-        // Inflar el diseño personalizado del toast (custom_toast.xml)
-        LayoutInflater inflater = getLayoutInflater();
-        View layout = inflater.inflate(R.layout.custom_toast,
-                findViewById(R.id.custom_toast_container));
-
-        // Encontrar el TextView y establecer el mensaje
-        TextView text = layout.findViewById(R.id.toast_text);
-        text.setText(message);
-
-        // Crear y mostrar el Toast
-        Toast toast = new Toast(getApplicationContext());
-        toast.setDuration(Toast.LENGTH_SHORT);
-        toast.setView(layout);
-        toast.show();
-    }
-    // ----------------------------------------------------
-
 
     private void initViews() {
         letra1 = findViewById(R.id.letra1);
@@ -100,9 +91,20 @@ public class MainActivity extends AppCompatActivity {
         tvVidas = findViewById(R.id.tvVidas);
         counter = findViewById(R.id.counter);
         record = findViewById(R.id.record);
-        nuevaPalabra = findViewById(R.id.change);
-        validar = findViewById(R.id.button);
         recycler = findViewById(R.id.recycler);
+    }
+
+    // Nuevo método para configurar la música
+    private void setupMusic() {
+        // Asegúrate de que tienes un archivo llamado musica_fondo.mp3 en res/raw/
+        mediaPlayer = MediaPlayer.create(this, R.raw.musica_fondo);
+        if (mediaPlayer != null) {
+            mediaPlayer.setLooping(true); // Repetir la música indefinidamente
+            mediaPlayer.start();
+        } else {
+            // Manejo de errores si el recurso no se encuentra
+            showCustomToast("Error: No se encontró el archivo de música.");
+        }
     }
 
     private void setupRecyclerView() {
@@ -111,21 +113,39 @@ public class MainActivity extends AppCompatActivity {
         recycler.setAdapter(adapter);
     }
 
+    // Método para mostrar el Toast personalizado (usa res/layout/custom_toast.xml)
+    private void showCustomToast(String message) {
+        LayoutInflater inflater = getLayoutInflater();
+        View layout = inflater.inflate(R.layout.custom_toast,
+                findViewById(R.id.custom_toast_container));
+
+        TextView text = layout.findViewById(R.id.toast_text);
+        text.setText(message);
+
+        Toast toast = new Toast(getApplicationContext());
+        toast.setDuration(Toast.LENGTH_SHORT);
+        toast.setView(layout);
+        toast.show();
+    }
+
+
     // Listener de acción del editor (Enter/Next/Done del teclado virtual)
     private final TextView.OnEditorActionListener editorListener = (v, actionId, event) -> {
+        // Verificar si la acción es Next o Done (depende de la configuración XML)
         if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
             validaPalabra();
 
+            // Ocultar el teclado después de validar para una mejor UX
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
                 imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
             }
-            return true;
+            return true; // El evento ha sido manejado
         }
         return false;
     };
 
-    // Listener de tecla (para teclados físicos o fallbacks)
+    // Listener de tecla (Aún se mantiene para teclados físicos o ciertos comportamientos)
     private final View.OnKeyListener enterListener = (v, keyCode, event) -> {
         if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
             validaPalabra();
@@ -142,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         letra4.setOnEditorActionListener(editorListener);
         letra5.setOnEditorActionListener(editorListener);
 
-        // Mantenemos OnKeyListener (teclados físicos)
+        // Mantenemos OnKeyListener (para teclados físicos o fallbacks)
         letra1.setOnKeyListener(enterListener);
         letra2.setOnKeyListener(enterListener);
         letra3.setOnKeyListener(enterListener);
@@ -150,9 +170,6 @@ public class MainActivity extends AppCompatActivity {
         letra5.setOnKeyListener(enterListener);
 
         setupAutoFocus();
-
-        nuevaPalabra.setOnClickListener(v -> cargarNuevaPalabra());
-        validar.setOnClickListener(v -> validaPalabra());
     }
 
     private void actualizarVidas() {
@@ -167,9 +184,7 @@ public class MainActivity extends AppCompatActivity {
         palabraSecreta = wordLoader.getRandomWord();
 
         if (palabraSecreta != null && !palabraSecreta.isEmpty()) {
-            // REEMPLAZO 1
             showCustomToast("Nueva palabra cargada");
-
             intentos = 0;
             vidas = 6;
             actualizarVidas();
@@ -180,7 +195,6 @@ public class MainActivity extends AppCompatActivity {
             listaIntentos.clear();
             adapter.notifyDataSetChanged();
         } else {
-            // REEMPLAZO 2
             showCustomToast("Error cargando palabras");
         }
     }
@@ -206,7 +220,6 @@ public class MainActivity extends AppCompatActivity {
                 letra5.getText().toString()).toUpperCase();
 
         if (intento.length() != 5) {
-            // REEMPLAZO 3
             showCustomToast("Escribe 5 letras");
             return;
         }
@@ -235,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
         char[] secreto = palabraSecreta.toCharArray();
         char[] intentoArray = intento.toCharArray();
 
-        // 1. Marcar VERDES
+        // 1. Marcar VERDES (Posición y letra correctas)
         for (int i = 0; i < 5; i++) {
             if (intentoArray[i] == secreto[i]) {
                 colores.set(i, "verde");
@@ -244,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // 2. Marcar AMARILLOS y GRISES
+        // 2. Marcar AMARILLOS (Letra correcta, posición incorrecta) y GRISES (Letra incorrecta)
         for (int i = 0; i < 5; i++) {
             if (intentoArray[i] != '*') {
                 boolean encontrada = false;
@@ -283,9 +296,7 @@ public class MainActivity extends AppCompatActivity {
             actualizarRecord();
         }
 
-        // REEMPLAZO 4
         showCustomToast("¡Correcto en " + intentos + " intentos!");
-
         bloquearUI(true);
         new androidx.appcompat.app.AlertDialog.Builder(this)
                 .setTitle("GRANDE ACERTASTE!!!!")
@@ -318,8 +329,6 @@ public class MainActivity extends AppCompatActivity {
         letra3.setEnabled(!bloquear);
         letra4.setEnabled(!bloquear);
         letra5.setEnabled(!bloquear);
-        validar.setEnabled(!bloquear);
-        nuevaPalabra.setEnabled(!bloquear);
     }
 
     private EditText getEditTextPorIndice(int i) {
@@ -406,6 +415,30 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         guardarEstado();
+        // Pausar música
+        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+            mediaPlayer.pause();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Reanudar música
+        if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
+            mediaPlayer.start();
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Liberar recursos
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
 
     private void guardarEstado() {

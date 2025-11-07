@@ -1,5 +1,6 @@
 package com.example.wordle;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -9,6 +10,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -51,16 +54,16 @@ public class MainActivity extends AppCompatActivity {
 
         wordLoader = new WordLoader(this);
 
-        // Inicialización de vistas
+        // 1. Inicializar vistas (DEBE SER PRIMERO para evitar NullPointer en la carga)
         initViews();
         setupRecyclerView();
         setupListeners();
 
-        // Cargar datos guardados previamente
+        // 2. Cargar estado que usa las vistas
         cargarRecord();
         cargarEstado();
 
-        // Si no hay palabra cargada, se inicia una nueva
+        // Lógica de inicio
         if (palabraSecreta == null || palabraSecreta.isEmpty()) {
             cargarNuevaPalabra();
         } else {
@@ -69,7 +72,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Inicializa todos los elementos de la interfaz de usuario
     private void initViews() {
         letra1 = findViewById(R.id.letra1);
         letra2 = findViewById(R.id.letra2);
@@ -84,15 +86,46 @@ public class MainActivity extends AppCompatActivity {
         recycler = findViewById(R.id.recycler);
     }
 
-    // Configura el RecyclerView y su adaptador
     private void setupRecyclerView() {
         recycler.setLayoutManager(new LinearLayoutManager(this));
         adapter = new AttemptAdapter(this, listaIntentos);
         recycler.setAdapter(adapter);
     }
 
-    // Configura los Click Listeners y Key Listeners
+    // Listener de acción del editor (Enter/Next/Done del teclado virtual)
+    private final TextView.OnEditorActionListener editorListener = (v, actionId, event) -> {
+        // Verificar si la acción es Next o Done (depende de la configuración XML)
+        if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT) {
+            validaPalabra();
+
+            // Ocultar el teclado después de validar para una mejor UX
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+            }
+            return true; // El evento ha sido manejado
+        }
+        return false;
+    };
+
+    // Listener de tecla (Aún se mantiene para teclados físicos o ciertos comportamientos)
+    private final View.OnKeyListener enterListener = (v, keyCode, event) -> {
+        if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
+            validaPalabra();
+            return true;
+        }
+        return false;
+    };
+
     private void setupListeners() {
+        // Aplicar OnEditorActionListener (teclado virtual) a TODAS las casillas
+        letra1.setOnEditorActionListener(editorListener);
+        letra2.setOnEditorActionListener(editorListener);
+        letra3.setOnEditorActionListener(editorListener);
+        letra4.setOnEditorActionListener(editorListener);
+        letra5.setOnEditorActionListener(editorListener);
+
+        // Mantenemos OnKeyListener (para teclados físicos o fallbacks)
         letra1.setOnKeyListener(enterListener);
         letra2.setOnKeyListener(enterListener);
         letra3.setOnKeyListener(enterListener);
@@ -173,32 +206,31 @@ public class MainActivity extends AppCompatActivity {
         }
 
         procesarIntento(intento);
-        limpiarCasillas(); // Limpiar después de procesar
+        limpiarCasillas();
     }
 
-    // Lógica principal de comparación de Wordle (Verde, Amarillo, Gris)
     private void procesarIntento(String intento) {
         List<String> colores = new ArrayList<>(Arrays.asList("", "", "", "", ""));
         char[] secreto = palabraSecreta.toCharArray();
         char[] intentoArray = intento.toCharArray();
 
-        // 1. Marcar VERDES
+        // 1. Marcar VERDES (Posición y letra correctas)
         for (int i = 0; i < 5; i++) {
             if (intentoArray[i] == secreto[i]) {
                 colores.set(i, "verde");
-                secreto[i] = '-'; // Marcar como usado
-                intentoArray[i] = '*'; // Marcar como usado
+                secreto[i] = '-';
+                intentoArray[i] = '*';
             }
         }
 
-        // 2. Marcar AMARILLOS y GRISES
+        // 2. Marcar AMARILLOS (Letra correcta, posición incorrecta) y GRISES (Letra incorrecta)
         for (int i = 0; i < 5; i++) {
-            if (intentoArray[i] != '*') { // Si no es verde
+            if (intentoArray[i] != '*') {
                 boolean encontrada = false;
                 for (int j = 0; j < 5; j++) {
                     if (intentoArray[i] == secreto[j]) {
                         encontrada = true;
-                        secreto[j] = '-'; // Marcar como usado
+                        secreto[j] = '-';
                         break;
                     }
                 }
@@ -206,13 +238,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // Mostrar en el RecyclerView
-        Attempt attemptObj = new Attempt(intento, colores);
-        listaIntentos.add(0, attemptObj);
-        adapter.notifyItemInserted(0);
-        recycler.scrollToPosition(0);
-
-        // Actualizar colores en las casillas del intento actual (opcional, pero se mantiene la lógica)
+        // Mostrar colores en las casillas del intento actual
         for(int i = 0; i < 5; i++) {
             EditText et = getEditTextPorIndice(i);
             int colorRes = getResources().getColor(
@@ -221,6 +247,12 @@ public class MainActivity extends AppCompatActivity {
                                     R.color.gris);
             et.setBackgroundColor(colorRes);
         }
+
+        // Mostrar en el RecyclerView
+        Attempt attemptObj = new Attempt(intento, colores);
+        listaIntentos.add(0, attemptObj);
+        adapter.notifyItemInserted(0);
+        recycler.scrollToPosition(0);
     }
 
     private void mostrarVictoria() {
@@ -257,7 +289,6 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    // Habilita o deshabilita los elementos de la UI
     private void bloquearUI(boolean bloquear) {
         letra1.setEnabled(!bloquear);
         letra2.setEnabled(!bloquear);
@@ -268,7 +299,6 @@ public class MainActivity extends AppCompatActivity {
         nuevaPalabra.setEnabled(!bloquear);
     }
 
-    // Devuelve el EditText correspondiente al índice
     private EditText getEditTextPorIndice(int i) {
         switch (i) {
             case 0: return letra1;
@@ -291,7 +321,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Configura el movimiento automático de foco al escribir una letra
     private void setAutoMove(EditText actual, EditText siguiente) {
         actual.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -303,15 +332,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // Listener para validar al presionar Enter en cualquier casilla
-    private final View.OnKeyListener enterListener = (v, keyCode, event) -> {
-        if (keyCode == KeyEvent.KEYCODE_ENTER && event.getAction() == KeyEvent.ACTION_DOWN) {
-            validaPalabra();
-            return true;
-        }
-        return false;
-    };
-
     private void vibrar(int ms) {
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         if (vibrator != null && vibrator.hasVibrator()) {
@@ -319,7 +339,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Configura el movimiento automático de foco y retroceso
     private void setupAutoFocus() {
         setAutoMove(letra1, letra2);
         setAutoMove(letra2, letra3);
@@ -332,7 +351,6 @@ public class MainActivity extends AppCompatActivity {
         setAutoBackspace(letra5, letra4);
     }
 
-    // Configura el retroceso de foco al borrar la primera letra de una casilla
     private void setAutoBackspace(EditText actual, EditText anterior) {
         actual.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_DEL && event.getAction() == KeyEvent.ACTION_DOWN) {
@@ -397,7 +415,6 @@ public class MainActivity extends AppCompatActivity {
 
             listaIntentos.clear();
             listaIntentos.addAll(cargados);
-            // El adaptador se inicializa en onCreate, si ya está cargado, lo actualizamos.
             if (adapter != null) {
                 adapter.notifyDataSetChanged();
             }

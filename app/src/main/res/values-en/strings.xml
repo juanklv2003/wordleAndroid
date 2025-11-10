@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Wordle</string>
+
+    <!-- UI Labels -->
+    <string name="label_score">SCORE: </string>
+    <string name="label_record_empty">RECORD: --</string>
+    <string name="label_record">RECORD: %1$d</string>
+    <string name="label_score_update">SCORE: %1$d</string>
+
+    <!-- Messages (Toast) -->
+    <string name="toast_new_word_loaded">New word loaded</string>
+    <string name="toast_error_loading_words">Error loading words</string>
+    <string name="toast_5_letters_please">Please type 5 letters</string>
+    <string name="toast_record_reset">Record reset.</string>
+    <string name="toast_correct_guess">Correct in %1$d attempts!</string>
+
+    <!-- Dialogs (Titles) -->
+    <string name="dialog_title_victory">GREAT! YOU GOT IT!!!!</string>
+    <string name="dialog_title_game_over">GAME OVER</string>
+    <string name="dialog_title_tutorial">How to Play</string>
+    <string name="dialog_title_about">About Wordle App</string>
+
+    <!-- Dialogs (Content) -->
+    <string name="dialog_message_game_over">The word was: %1$s</string>
+    <string name="dialog_message_tutorial">Guess the hidden word in 6 tries.\n\nEach guess must be a valid 5-letter word.\n\nAfter each guess, the color of the tiles will change to show how close your guess was to the word.\n\n🟩 Green: The letter is in the word and in the correct spot.\n🟨 Yellow: The letter is in the word but in the wrong spot.\n⬜ Gray: The letter is not in the word.</string>
+    <string name="dialog_message_about">Wordle game developed in Android Studio.\n</string>
+
+    <!-- Dialogs (Buttons) -->
+    <string name="dialog_button_new_word">NEW WORD</string>
+    <string name="dialog_button_understood">Got it</string>
+    <string name="dialog_button_close">Close</string>
+
+    <!-- NEW MENU OPTIONS -->
+    <string name="menu_change_background">Change Background</string>
+    <string name="menu_change_language">Change Language</string>
+    <string name="menu_change_music">Change Music</string>
+    <string name="menu_credits">Credits</string>
+</resources>

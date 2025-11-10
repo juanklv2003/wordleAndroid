@@ -1,0 +1,38 @@
+<resources>
+    <string name="app_name">Wordle</string>
+
+    <!-- Etiquetas da UI -->
+    <string name="label_score">SCORE: </string>
+    <string name="label_record_empty">RÉCORD: --</string>
+    <string name="label_record">RÉCORD: %1$d</string>
+    <string name="label_score_update">SCORE: %1$d</string>
+
+    <!-- Mensaxes (Toast) -->
+    <string name="toast_new_word_loaded">Nova palabra cargada</string>
+    <string name="toast_error_loading_words">Erro cargando as palabras</string>
+    <string name="toast_5_letters_please">Escribe 5 letras</string>
+    <string name="toast_record_reset">Récord reiniciado.</string>
+    <string name="toast_correct_guess">Correcto en %1$d intentos!</string>
+
+    <!-- Diálogos (Títulos) -->
+    <string name="dialog_title_victory">XENIAL! ACERTACHES!!!!</string>
+    <string name="dialog_title_game_over">FIN DA PARTIDA</string>
+    <string name="dialog_title_tutorial">Como Xogar</string>
+    <string name="dialog_title_about">Sobre a App Wordle</string>
+
+    <!-- Diálogos (Contido) -->
+    <string name="dialog_message_game_over">A palabra era: %1$s</string>
+    <string name="dialog_message_tutorial">Adiviña a palabra oculta en 6 intentos.\n\nCada intento debe ser unha palabra válida de 5 letras.\n\nDespois de cada intento, a cor das casas cambiará para amosar o preto que estás de acertar a palabra.\n\n🟩 Verde: A letra está na palabra e na posición correcta.\n🟨 Amarelo: A letra está na palabra pero na posición incorrecta.\n⬜ Gris: A letra non está na palabra.</string>
+    <string name="dialog_message_about">Xogo de Wordle desenvolvido en Android Studio.\n</string>
+
+    <!-- Diálogos (Botóns) -->
+    <string name="dialog_button_new_word">NOVA PALABRA</string>
+    <string name="dialog_button_understood">Entendido</string>
+    <string name="dialog_button_close">Pechar</string>
+
+    <!-- NOVAS OPCIÓNS DO MENÚ -->
+    <string name="menu_change_background">Cambiar Fondo</string>
+    <string name="menu_change_language">Cambiar Idioma</string>
+    <string name="menu_change_music">Cambiar Música</string>
+    <string name="menu_credits">Créditos</string>
+</resources>

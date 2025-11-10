@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/cambiarFondo"
+        android:title="@string/menu_change_background"
+        android:icon="@android:drawable/ic_menu_add"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/cambiarIdioma"
+        android:title="@string/menu_change_language"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/cambiarMusica"
+        android:title="@string/menu_change_music"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/creditos"
+        android:title="@string/menu_credits"
+        app:showAsAction="never" />
+</menu>

@@ -6,4 +6,18 @@
     </style>
 
     <style name="Theme.Wordle" parent="Base.Theme.Wordle" />
+
+    <!--
+      AÑADE ESTE NUEVO ESTILO:
+      Define la apariencia del menú desplegable.
+    -->
+    <style name="EstiloMenuDesplegableBlanco" parent="ThemeOverlay.AppCompat.Dark">
+
+        <!-- 1. Pone el texto de las opciones (ej. "Créditos") en BLANCO -->
+        <item name="android:textColor">#FFFFFF</item>
+
+        <!-- 2. Pone el fondo del menú en GRIS OSCURO -->
+        <!-- (Necesario, sino sería texto blanco sobre fondo blanco por defecto) -->
+        <item name="android:background">#424242</item>
+    </style>
 </resources>

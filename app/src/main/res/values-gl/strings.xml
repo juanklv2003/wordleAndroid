@@ -35,4 +35,10 @@
     <string name="menu_change_language">Cambiar Idioma</string>
     <string name="menu_change_music">Cambiar Música</string>
     <string name="menu_credits">Créditos</string>
+
+    <!-- Opcións de Música -->
+    <string name="music_option_default">Música Principal</string>
+    <string name="music_option_alt_1">Canción 1</string>
+    <string name="music_option_alt_2">Canción 2</string>
+    <string name="music_option_none">Silencio</string>
 </resources>

@@ -49,15 +49,13 @@ import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
+    // ... (Variables de Vistas y Juego)
     private RecyclerView recycler;
     private AttemptAdapter adapter;
     private final ArrayList<Attempt> listaIntentos = new ArrayList<>();
-
     private String palabraSecreta = "";
-    private WordLoader wordLoader; // Se inicializa después de cargar el idioma
-
+    private WordLoader wordLoader;
     private EditText letra1, letra2, letra3, letra4, letra5;
-
     private int intentos = 0;
     private int recordIntentos = Integer.MAX_VALUE;
     private int vidas = 6;
@@ -65,40 +63,48 @@ public class MainActivity extends AppCompatActivity {
     private TextView counter, record;
     private Toolbar toolbar;
 
+    // --- Variables de Música e Idioma ---
     private MediaPlayer mediaPlayer;
-
-    // Variable para guardar el idioma actual
     private String currentLangCode = "es";
+    // ID de la canción actual. 0 = Silencio.
+    private int currentMusicResId = R.raw.musica_fondo; // Default
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. Cargar el idioma guardado ANTES de todo
+        // 1. Cargar idioma (Debe ir ANTES de setContentView)
         cargarIdiomaGuardado();
+
+        // 2. Cargar preferencia de música
+        cargarMusicaGuardada();
 
         setContentView(R.layout.activity_main);
 
-
+        // 3. Inicializar WordLoader CON el idioma correcto
         wordLoader = new WordLoader(this, currentLangCode);
 
-        // 3. Inicializar vistas
+        // 4. Inicializar vistas
         initViews();
 
-        // 4. Configurar el Toolbar
+        // 5. Configurar el Toolbar
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false); // Oculta el título
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
         }
 
+        // 6. Configurar RecyclerView y Listeners
         setupRecyclerView();
         setupListeners();
 
-        setupMusic();
+        // 7. Iniciar la música (basado en la preferencia cargada)
+        iniciarMusica(currentMusicResId);
 
+        // 8. Cargar estado que usa las vistas
         cargarRecord();
         cargarEstado();
 
+        // 9. Lógica de inicio
         if (palabraSecreta == null || palabraSecreta.isEmpty()) {
             cargarNuevaPalabra();
         } else {
@@ -152,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    // --- MÉTODOS DE LAS NUEVAS OPCIONES DEL MENÚ ---
+    // --- MÉTODOS DE LAS OPCIONES DEL MENÚ ---
 
     private void mostrarCreditos() {
         new AlertDialog.Builder(this)
@@ -170,7 +176,6 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle(R.string.menu_change_language)
                 .setItems(idiomas, (dialog, which) -> {
                     String codigoSeleccionado = codigosIdioma[which];
-                    // Comprobar si el idioma seleccionado es diferente al actual
                     if (!codigoSeleccionado.equals(currentLangCode)) {
                         cambiarIdioma(codigoSeleccionado);
                     }
@@ -178,15 +183,42 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    // ¡NUEVO! Diálogo para cambiar música
     private void mostrarDialogoMusica() {
-        showCustomToast("Función 'Cambiar Música' aún no implementada.");
+        // Los nombres de las canciones (usando strings.xml)
+        final String[] nombresMusica = {
+                getString(R.string.music_option_default),
+                getString(R.string.music_option_alt_1),
+                getString(R.string.music_option_alt_2),
+                getString(R.string.music_option_none)
+        };
+
+        final int[] resIdsMusica = {
+                R.raw.musica_fondo,
+                R.raw.musica_alternativa1,
+                R.raw.musica_alternativa2,
+                0
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.menu_change_music)
+                .setItems(nombresMusica, (dialog, which) -> {
+                    int resIdSeleccionado = resIdsMusica[which];
+
+                    // Solo cambiamos si la selección es diferente a la actual
+                    if (resIdSeleccionado != currentMusicResId) {
+                        guardarMusica(resIdSeleccionado);
+                        iniciarMusica(resIdSeleccionado);
+                    }
+                })
+                .show();
     }
 
     private void mostrarDialogoFondo() {
         showCustomToast("Función 'Cambiar Fondo' aún no implementada.");
     }
 
-    // --- LÓGICA DE CAMBIO DE IDIOMA ---
+    // --- LÓGICA DE IDIOMA Y MÚSICA ---
 
     private void guardarIdioma(String codigoIdioma) {
         SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
@@ -195,15 +227,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void cargarIdiomaGuardado() {
         SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
-        currentLangCode = prefs.getString("idioma", "es"); // Actualiza la variable de clase
+        currentLangCode = prefs.getString("idioma", "es");
         establecerIdioma(currentLangCode);
     }
 
     private void cambiarIdioma(String codigoIdioma) {
         guardarIdioma(codigoIdioma);
-        // Actualiza la variable de clase antes de reiniciar
         currentLangCode = codigoIdioma;
-        recreate(); // Reinicia la actividad para aplicar el idioma y cargar el nuevo JSON
+        recreate();
     }
 
     private void establecerIdioma(String codigoIdioma) {
@@ -215,10 +246,36 @@ public class MainActivity extends AppCompatActivity {
         res.updateConfiguration(config, res.getDisplayMetrics());
     }
 
-    // --- MÉTODOS DEL JUEGO (TRADUCIDOS) ---
+    // ¡NUEVO! Guarda la música en SharedPreferences
+    private void guardarMusica(int resId) {
+        currentMusicResId = resId; // Actualiza la variable global
+        SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
+        prefs.edit().putInt("musica_id", resId).apply();
+    }
 
-    private void setupMusic() {
-        mediaPlayer = MediaPlayer.create(this, R.raw.musica_fondo);
+    // ¡NUEVO! Carga la música guardada al iniciar
+    private void cargarMusicaGuardada() {
+        SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
+        // Carga R.raw.musica_fondo como default si no hay nada guardado
+        currentMusicResId = prefs.getInt("musica_id", R.raw.musica_fondo);
+    }
+
+    // ¡MODIFICADO! Este método ahora puede iniciar CUALQUIER canción (o ninguna)
+    private void iniciarMusica(int resId) {
+        // 1. Detener y liberar el reproductor actual (si existe)
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+
+        // 2. Si el ID es 0 (Silencio), no hacemos nada más
+        if (resId == 0) {
+            return;
+        }
+
+        // 3. Crear e iniciar el nuevo reproductor
+        mediaPlayer = MediaPlayer.create(this, resId);
         if (mediaPlayer != null) {
             mediaPlayer.setLooping(true);
             mediaPlayer.start();
@@ -226,6 +283,12 @@ public class MainActivity extends AppCompatActivity {
             showCustomToast(getString(R.string.toast_error_loading_words));
         }
     }
+
+    // El método setupMusic() original ya no es necesario,
+    // su lógica está ahora en cargarMusicaGuardada() e iniciarMusica()
+
+
+    // --- MÉTODOS DEL JUEGO (TRADUCIDOS) ---
 
     private void showCustomToast(String message) {
         LayoutInflater inflater = getLayoutInflater();
@@ -290,7 +353,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cargarNuevaPalabra() {
-        // wordLoader ya fue inicializado con el idioma correcto en onCreate
         palabraSecreta = wordLoader.getRandomWord();
 
         if (palabraSecreta != null && !palabraSecreta.isEmpty() && !palabraSecreta.equals("FALLO") && !palabraSecreta.equals("ERROR")) {
@@ -303,20 +365,22 @@ public class MainActivity extends AppCompatActivity {
 
             bloquearUI(false);
             listaIntentos.clear();
-            if (adapter != null) { // Comprobación de nulidad
+            if (adapter != null) {
                 adapter.notifyDataSetChanged();
             }
         } else {
             showCustomToast(getString(R.string.toast_error_loading_words));
-            palabraSecreta = "ERROR"; // Pone una palabra de fallback
+            palabraSecreta = "ERROR";
         }
     }
 
     private void limpiarCasillas() {
         EditText[] letras = {letra1, letra2, letra3, letra4, letra5};
         for (EditText txt : letras) {
-            txt.setText("");
-            txt.setBackgroundColor(Color.WHITE);
+            if (txt != null) {
+                txt.setText("");
+                txt.setBackgroundColor(Color.WHITE);
+            }
         }
         if (letra1 != null) {
             letra1.requestFocus();
@@ -382,16 +446,18 @@ public class MainActivity extends AppCompatActivity {
         }
         for(int i = 0; i < 5; i++) {
             EditText et = getEditTextPorIndice(i);
-            int colorRes = getResources().getColor(
-                    colores.get(i).equals("verde") ? R.color.verde :
-                            colores.get(i).equals("amarillo") ? R.color.amarillo :
-                                    R.color.gris);
-            et.setBackgroundColor(colorRes);
+            if (et != null) {
+                int colorRes = getResources().getColor(
+                        colores.get(i).equals("verde") ? R.color.verde :
+                                colores.get(i).equals("amarillo") ? R.color.amarillo :
+                                        R.color.gris);
+                et.setBackgroundColor(colorRes);
+            }
         }
         Attempt attemptObj = new Attempt(intento, colores);
         listaIntentos.add(0, attemptObj);
 
-        if (adapter != null) { // Comprobación de nulidad
+        if (adapter != null) {
             adapter.notifyItemInserted(0);
             recycler.scrollToPosition(0);
         }
@@ -431,7 +497,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void bloquearUI(boolean bloquear) {
-        if (letra1 == null) return; // Comprobación de seguridad
+        if (letra1 == null) return;
         letra1.setEnabled(!bloquear);
         letra2.setEnabled(!bloquear);
         letra3.setEnabled(!bloquear);
@@ -450,13 +516,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void actualizarScore() {
-        if (counter != null) { // Comprobación de nulidad
+        if (counter != null) {
             counter.setText(getString(R.string.label_score_update, intentos));
         }
     }
 
     private void actualizarRecord() {
-        if (record != null) { // Comprobación de nulidad
+        if (record != null) {
             if (recordIntentos != Integer.MAX_VALUE) {
                 record.setText(getString(R.string.label_record, recordIntentos));
             } else {
@@ -466,11 +532,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setAutoMove(EditText actual, EditText siguiente) {
+        if (actual == null || siguiente == null) return;
         actual.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() == 1 && siguiente != null) siguiente.requestFocus();
+                if (s.length() == 1) siguiente.requestFocus();
             }
             @Override public void afterTextChanged(Editable s) {}
         });
@@ -495,9 +562,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setAutoBackspace(EditText actual, EditText anterior) {
+        if (actual == null || anterior == null) return;
         actual.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_DEL && event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (actual.getText().length() == 0 && anterior != null) {
+                if (actual.getText().length() == 0) {
                     anterior.requestFocus();
                     anterior.setText("");
                     return true;
@@ -524,6 +592,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         guardarEstado();
+        // Pausar música SÓLO si se está reproduciendo
         if (mediaPlayer != null && mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
         }
@@ -532,6 +601,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        // Reanudar música SÓLO si NO se está reproduciendo (y no es nulo)
         if (mediaPlayer != null && !mediaPlayer.isPlaying()) {
             mediaPlayer.start();
         }
@@ -540,6 +610,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        // Liberar recursos
         if (mediaPlayer != null) {
             mediaPlayer.stop();
             mediaPlayer.release();
@@ -553,20 +624,24 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("palabraSecreta", palabraSecreta);
         editor.putInt("puntuacion", intentos);
         editor.putInt("vidas", vidas);
+
+        // Guardar el idioma en el que se guardó este estado
+        editor.putString("idioma_estado", currentLangCode);
+
         Gson gson = new Gson();
         String jsonIntentos = gson.toJson(listaIntentos);
         editor.putString("intentos", jsonIntentos);
         editor.apply();
     }
 
-
-
     private void cargarEstado() {
         SharedPreferences prefs = getSharedPreferences("WORDLE_DATA", MODE_PRIVATE);
 
-        // No cargamos la palabra secreta si el idioma ha cambiado
+        // Comprobar si el estado guardado coincide con el idioma actual
         String idiomaGuardado = prefs.getString("idioma_estado", currentLangCode);
+
         if (idiomaGuardado.equals(currentLangCode)) {
+            // Si el idioma coincide, cargamos el progreso
             palabraSecreta = prefs.getString("palabraSecreta", null);
             intentos = prefs.getInt("puntuacion", 0);
             vidas = prefs.getInt("vidas", 6);
@@ -579,16 +654,12 @@ public class MainActivity extends AppCompatActivity {
                 listaIntentos.addAll(cargados);
             }
         } else {
-            // Si el idioma cambió, no cargamos el estado anterior, forzamos una nueva palabra
+            // Si el idioma cambió, forzamos una nueva partida
             palabraSecreta = null;
             intentos = 0;
             vidas = 6;
             listaIntentos.clear();
         }
-
-        // Actualizamos el idioma guardado
-        prefs.edit().putString("idioma_estado", currentLangCode).apply();
-
 
         // Actualizamos la UI
         if (adapter != null) {

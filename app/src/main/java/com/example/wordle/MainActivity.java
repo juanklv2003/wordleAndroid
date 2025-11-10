@@ -2,8 +2,8 @@ package com.example.wordle;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Configuration; // Import para cambiar idioma
-import android.content.res.Resources; // Import para cambiar idioma
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -13,8 +13,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.Menu; // Import para el Menú
-import android.view.MenuItem; // Import para el Menú
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -22,20 +22,30 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AlertDialog; // Import para Diálogos
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar; // Import para el Toolbar
+import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+// Importaciones de JSON (ya las tenías en tu WordLoader)
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+// Importaciones de GSON (las usas para guardar el estado, así que las dejamos)
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale; // Import para cambiar idioma
+import java.util.Locale;
+import java.util.Random;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
     private final ArrayList<Attempt> listaIntentos = new ArrayList<>();
 
     private String palabraSecreta = "";
-    private WordLoader wordLoader;
+    private WordLoader wordLoader; // Se inicializa después de cargar el idioma
 
     private EditText letra1, letra2, letra3, letra4, letra5;
 
@@ -53,42 +63,42 @@ public class MainActivity extends AppCompatActivity {
     private int vidas = 6;
     private TextView tvVidas;
     private TextView counter, record;
-    private Toolbar toolbar; // Variable para el Toolbar
+    private Toolbar toolbar;
 
     private MediaPlayer mediaPlayer;
+
+    // Variable para guardar el idioma actual
+    private String currentLangCode = "es";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Cargar el idioma guardado ANTES de establecer la vista
+        // 1. Cargar el idioma guardado ANTES de todo
         cargarIdiomaGuardado();
 
         setContentView(R.layout.activity_main);
 
-        wordLoader = new WordLoader(this);
 
-        // 1. Inicializar vistas
+        wordLoader = new WordLoader(this, currentLangCode);
+
+        // 3. Inicializar vistas
         initViews();
 
-        // 2. Configurar el Toolbar como barra de acción
+        // 4. Configurar el Toolbar
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false); // Oculta el título "Wordle"
+            getSupportActionBar().setDisplayShowTitleEnabled(false); // Oculta el título
         }
 
-        // 3. Configurar RecyclerView y Listeners
         setupRecyclerView();
         setupListeners();
 
-        // 4. Configurar música de fondo
         setupMusic();
 
-        // 5. Cargar estado que usa las vistas
         cargarRecord();
         cargarEstado();
 
-        // Lógica de inicio
         if (palabraSecreta == null || palabraSecreta.isEmpty()) {
             cargarNuevaPalabra();
         } else {
@@ -98,9 +108,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        // Inicialización del Toolbar
         toolbar = findViewById(R.id.toolbar);
-
         letra1 = findViewById(R.id.letra1);
         letra2 = findViewById(R.id.letra2);
         letra3 = findViewById(R.id.letra3);
@@ -111,23 +119,20 @@ public class MainActivity extends AppCompatActivity {
         record = findViewById(R.id.record);
         recycler = findViewById(R.id.recycler);
 
-        // Establecer texto inicial usando strings.xml
         counter.setText(R.string.label_score);
         record.setText(R.string.label_record_empty);
     }
 
-    // --- MANEJO DEL MENÚ (PASO 3B) ---
+    // --- MANEJO DEL MENÚ ---
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Carga el archivo XML del menú (res/menu/main_menu.xml)
         getMenuInflater().inflate(R.menu.main_menu, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Maneja los clics en los nuevos IDs del menú
         int itemId = item.getItemId();
 
         if (itemId == R.id.cambiarFondo) {
@@ -151,37 +156,35 @@ public class MainActivity extends AppCompatActivity {
 
     private void mostrarCreditos() {
         new AlertDialog.Builder(this)
-                .setTitle(R.string.menu_credits) // Usa string
-                .setMessage(R.string.dialog_message_about) // Usa string
-                .setPositiveButton(R.string.dialog_button_close, (dialog, which) -> dialog.dismiss()) // Usa string
+                .setTitle(R.string.menu_credits)
+                .setMessage(R.string.dialog_message_about)
+                .setPositiveButton(R.string.dialog_button_close, (dialog, which) -> dialog.dismiss())
                 .show();
     }
 
     private void mostrarDialogoIdioma() {
-        // Define los idiomas que ofreces
         final String[] idiomas = {"Español", "English", "Galego"};
         final String[] codigosIdioma = {"es", "en", "gl"};
 
         new AlertDialog.Builder(this)
-                .setTitle(R.string.menu_change_language) // Usa string
+                .setTitle(R.string.menu_change_language)
                 .setItems(idiomas, (dialog, which) -> {
-                    // 'which' es el índice (0=es, 1=en, 2=gl)
                     String codigoSeleccionado = codigosIdioma[which];
-                    cambiarIdioma(codigoSeleccionado);
+                    // Comprobar si el idioma seleccionado es diferente al actual
+                    if (!codigoSeleccionado.equals(currentLangCode)) {
+                        cambiarIdioma(codigoSeleccionado);
+                    }
                 })
                 .show();
     }
 
     private void mostrarDialogoMusica() {
-        // Lógica para cambiar la música (placeholder)
         showCustomToast("Función 'Cambiar Música' aún no implementada.");
     }
 
     private void mostrarDialogoFondo() {
-        // Lógica para cambiar el fondo (placeholder)
         showCustomToast("Función 'Cambiar Fondo' aún no implementada.");
     }
-
 
     // --- LÓGICA DE CAMBIO DE IDIOMA ---
 
@@ -192,14 +195,15 @@ public class MainActivity extends AppCompatActivity {
 
     private void cargarIdiomaGuardado() {
         SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
-        String codigoIdioma = prefs.getString("idioma", "es");
-        establecerIdioma(codigoIdioma);
+        currentLangCode = prefs.getString("idioma", "es"); // Actualiza la variable de clase
+        establecerIdioma(currentLangCode);
     }
 
     private void cambiarIdioma(String codigoIdioma) {
         guardarIdioma(codigoIdioma);
-        // Necesitamos reiniciar la actividad para que los cambios de idioma surtan efecto
-        recreate();
+        // Actualiza la variable de clase antes de reiniciar
+        currentLangCode = codigoIdioma;
+        recreate(); // Reinicia la actividad para aplicar el idioma y cargar el nuevo JSON
     }
 
     private void establecerIdioma(String codigoIdioma) {
@@ -211,7 +215,7 @@ public class MainActivity extends AppCompatActivity {
         res.updateConfiguration(config, res.getDisplayMetrics());
     }
 
-
+    // --- MÉTODOS DEL JUEGO (TRADUCIDOS) ---
 
     private void setupMusic() {
         mediaPlayer = MediaPlayer.create(this, R.raw.musica_fondo);
@@ -219,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.setLooping(true);
             mediaPlayer.start();
         } else {
-            // Usa string
             showCustomToast(getString(R.string.toast_error_loading_words));
         }
     }
@@ -287,10 +290,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cargarNuevaPalabra() {
+        // wordLoader ya fue inicializado con el idioma correcto en onCreate
         palabraSecreta = wordLoader.getRandomWord();
 
-        if (palabraSecreta != null && !palabraSecreta.isEmpty()) {
-            // Usa string
+        if (palabraSecreta != null && !palabraSecreta.isEmpty() && !palabraSecreta.equals("FALLO") && !palabraSecreta.equals("ERROR")) {
             showCustomToast(getString(R.string.toast_new_word_loaded));
             intentos = 0;
             vidas = 6;
@@ -300,10 +303,12 @@ public class MainActivity extends AppCompatActivity {
 
             bloquearUI(false);
             listaIntentos.clear();
-            adapter.notifyDataSetChanged();
+            if (adapter != null) { // Comprobación de nulidad
+                adapter.notifyDataSetChanged();
+            }
         } else {
-            // Usa string
             showCustomToast(getString(R.string.toast_error_loading_words));
+            palabraSecreta = "ERROR"; // Pone una palabra de fallback
         }
     }
 
@@ -313,7 +318,9 @@ public class MainActivity extends AppCompatActivity {
             txt.setText("");
             txt.setBackgroundColor(Color.WHITE);
         }
-        letra1.requestFocus();
+        if (letra1 != null) {
+            letra1.requestFocus();
+        }
     }
 
     private void validaPalabra() {
@@ -326,7 +333,6 @@ public class MainActivity extends AppCompatActivity {
                 letra5.getText().toString()).toUpperCase();
 
         if (intento.length() != 5) {
-            // Usa string
             showCustomToast(getString(R.string.toast_5_letters_please));
             return;
         }
@@ -351,7 +357,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void procesarIntento(String intento) {
-        // ... (Esta lógica interna no tiene texto) ...
         List<String> colores = new ArrayList<>(Arrays.asList("", "", "", "", ""));
         char[] secreto = palabraSecreta.toCharArray();
         char[] intentoArray = intento.toCharArray();
@@ -385,8 +390,11 @@ public class MainActivity extends AppCompatActivity {
         }
         Attempt attemptObj = new Attempt(intento, colores);
         listaIntentos.add(0, attemptObj);
-        adapter.notifyItemInserted(0);
-        recycler.scrollToPosition(0);
+
+        if (adapter != null) { // Comprobación de nulidad
+            adapter.notifyItemInserted(0);
+            recycler.scrollToPosition(0);
+        }
     }
 
     private void mostrarVictoria() {
@@ -395,14 +403,12 @@ public class MainActivity extends AppCompatActivity {
             guardarRecord();
             actualizarRecord();
         }
-
-        // Usa string con formato
         showCustomToast(getString(R.string.toast_correct_guess, intentos));
         bloquearUI(true);
         new AlertDialog.Builder(this)
-                .setTitle(R.string.dialog_title_victory) // Usa string
+                .setTitle(R.string.dialog_title_victory)
                 .setCancelable(false)
-                .setPositiveButton(R.string.dialog_button_new_word, (dialog, which) -> { // Usa string
+                .setPositiveButton(R.string.dialog_button_new_word, (dialog, which) -> {
                     cargarNuevaPalabra();
                     bloquearUI(false);
                     dialog.dismiss();
@@ -413,10 +419,10 @@ public class MainActivity extends AppCompatActivity {
     private void mostrarGameOver() {
         bloquearUI(true);
         new AlertDialog.Builder(this)
-                .setTitle(R.string.dialog_title_game_over) // Usa string
-                .setMessage(getString(R.string.dialog_message_game_over, palabraSecreta)) // Usa string con formato
+                .setTitle(R.string.dialog_title_game_over)
+                .setMessage(getString(R.string.dialog_message_game_over, palabraSecreta))
                 .setCancelable(false)
-                .setPositiveButton(R.string.dialog_button_new_word, (dialog, which) -> { // Usa string
+                .setPositiveButton(R.string.dialog_button_new_word, (dialog, which) -> {
                     cargarNuevaPalabra();
                     bloquearUI(false);
                     dialog.dismiss();
@@ -425,6 +431,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void bloquearUI(boolean bloquear) {
+        if (letra1 == null) return; // Comprobación de seguridad
         letra1.setEnabled(!bloquear);
         letra2.setEnabled(!bloquear);
         letra3.setEnabled(!bloquear);
@@ -443,27 +450,27 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void actualizarScore() {
-        // Usa string con formato
-        counter.setText(getString(R.string.label_score_update, intentos));
-    }
-
-    private void actualizarRecord() {
-        if (recordIntentos != Integer.MAX_VALUE) {
-            // Usa string con formato
-            record.setText(getString(R.string.label_record, recordIntentos));
-        } else {
-            // Usa string
-            record.setText(R.string.label_record_empty);
+        if (counter != null) { // Comprobación de nulidad
+            counter.setText(getString(R.string.label_score_update, intentos));
         }
     }
 
-    // ... (El resto de métodos no tienen texto visible) ...
+    private void actualizarRecord() {
+        if (record != null) { // Comprobación de nulidad
+            if (recordIntentos != Integer.MAX_VALUE) {
+                record.setText(getString(R.string.label_record, recordIntentos));
+            } else {
+                record.setText(R.string.label_record_empty);
+            }
+        }
+    }
+
     private void setAutoMove(EditText actual, EditText siguiente) {
         actual.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.length() == 1) siguiente.requestFocus();
+                if (s.length() == 1 && siguiente != null) siguiente.requestFocus();
             }
             @Override public void afterTextChanged(Editable s) {}
         });
@@ -490,7 +497,7 @@ public class MainActivity extends AppCompatActivity {
     private void setAutoBackspace(EditText actual, EditText anterior) {
         actual.setOnKeyListener((v, keyCode, event) -> {
             if (keyCode == KeyEvent.KEYCODE_DEL && event.getAction() == KeyEvent.ACTION_DOWN) {
-                if (actual.getText().length() == 0) {
+                if (actual.getText().length() == 0 && anterior != null) {
                     anterior.requestFocus();
                     anterior.setText("");
                     return true;
@@ -552,21 +559,42 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
+
+
     private void cargarEstado() {
         SharedPreferences prefs = getSharedPreferences("WORDLE_DATA", MODE_PRIVATE);
-        palabraSecreta = prefs.getString("palabraSecreta", null);
-        intentos = prefs.getInt("puntuacion", 0);
-        vidas = prefs.getInt("vidas", 6);
-        String jsonIntentos = prefs.getString("intentos", null);
-        if (jsonIntentos != null) {
-            Gson gson = new Gson();
-            Type type = new TypeToken<ArrayList<Attempt>>() {}.getType();
-            ArrayList<Attempt> cargados = gson.fromJson(jsonIntentos, type);
-            listaIntentos.clear();
-            listaIntentos.addAll(cargados);
-            if (adapter != null) {
-                adapter.notifyDataSetChanged();
+
+        // No cargamos la palabra secreta si el idioma ha cambiado
+        String idiomaGuardado = prefs.getString("idioma_estado", currentLangCode);
+        if (idiomaGuardado.equals(currentLangCode)) {
+            palabraSecreta = prefs.getString("palabraSecreta", null);
+            intentos = prefs.getInt("puntuacion", 0);
+            vidas = prefs.getInt("vidas", 6);
+            String jsonIntentos = prefs.getString("intentos", null);
+            if (jsonIntentos != null) {
+                Gson gson = new Gson();
+                Type type = new TypeToken<ArrayList<Attempt>>() {}.getType();
+                ArrayList<Attempt> cargados = gson.fromJson(jsonIntentos, type);
+                listaIntentos.clear();
+                listaIntentos.addAll(cargados);
             }
+        } else {
+            // Si el idioma cambió, no cargamos el estado anterior, forzamos una nueva palabra
+            palabraSecreta = null;
+            intentos = 0;
+            vidas = 6;
+            listaIntentos.clear();
         }
+
+        // Actualizamos el idioma guardado
+        prefs.edit().putString("idioma_estado", currentLangCode).apply();
+
+
+        // Actualizamos la UI
+        if (adapter != null) {
+            adapter.notifyDataSetChanged();
+        }
+        actualizarVidas();
+        actualizarScore();
     }
 }

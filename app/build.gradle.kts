@@ -1,5 +1,11 @@
 plugins {
     alias(libs.plugins.android.application)
+    // 1. ESTE ES EL PLUGIN DE KOTLIN-ANDROID
+    alias(libs.plugins.kotlinAndroid)
+
+    // 2. ¡ESTE ES EL PLUGIN DE KAPT QUE FALTABA!
+    // Esta línea arregla el error "Unresolved reference: kapt"
+    alias(libs.plugins.kotlinKapt)
 }
 
 android {
@@ -29,6 +35,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    kotlinOptions {
+        jvmTarget = "11" // O '17' si tienes Java 17 instalado y quieres usarlo
+    }
 }
 
 dependencies {
@@ -45,6 +55,14 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // LIBRERÍA PARA GIFS (Glide)
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    kapt("com.github.bumptech.glide:compiler:4.12.0") // <-- kapt es esencial
+
+    implementation("com.github.madrapps:pikolo:2.0.2")
+
+
 
 
     //retrofrit

@@ -7,14 +7,28 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
+    <!-- 2. BARRA DE HERRAMIENTAS (¡CORREGIDA!) -->
+    <ImageView
+        android:id="@+id/fondoImageView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:background="@android:color/transparent">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
@@ -24,18 +38,6 @@
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:popupTheme="@style/EstiloMenuDesplegableBlanco" />
     </com.google.android.material.appbar.AppBarLayout>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler"
-        android:layout_width="258dp"
-        android:layout_height="140dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="@+id/letra5"
-        app:layout_constraintHorizontal_bias="0.523"
-        app:layout_constraintStart_toStartOf="@+id/letra1"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.52" />
 
     <TextView
         android:id="@+id/tvVidas"
@@ -47,8 +49,26 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.55"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
         app:layout_constraintVertical_bias="0.689" />
+
+    <EditText
+        android:id="@+id/letra1"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:gravity="center"
+        android:imeOptions="actionNext"
+        android:inputType="textCapCharacters"
+        android:maxLength="1"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.078"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/appBarLayout"
+        app:layout_constraintVertical_bias="0.297" />
+
 
     <EditText
         android:id="@+id/letra4"
@@ -64,38 +84,6 @@
         app:layout_constraintStart_toEndOf="@+id/letra3"
         app:layout_constraintTop_toTopOf="@+id/letra1"
         app:layout_constraintVertical_bias="0.0" />
-
-    <EditText
-        android:id="@+id/letra3"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
-        android:gravity="center"
-        android:imeOptions="actionNext"
-        android:inputType="textCapCharacters"
-        android:maxLength="1"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="@+id/letra1"
-        app:layout_constraintEnd_toStartOf="@+id/letra4"
-        app:layout_constraintStart_toEndOf="@+id/letra2"
-        app:layout_constraintTop_toTopOf="@+id/letra1"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <EditText
-        android:id="@+id/letra1"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
-        android:gravity="center"
-        android:imeOptions="actionNext"
-        android:inputType="textCapCharacters"
-        android:maxLength="1"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.101"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.297" />
 
     <EditText
         android:id="@+id/letra2"
@@ -126,6 +114,33 @@
         app:layout_constraintStart_toEndOf="@+id/letra4"
         app:layout_constraintTop_toTopOf="@+id/letra1"
         app:layout_constraintVertical_bias="0.0" />
+
+    <EditText
+        android:id="@+id/letra3"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:gravity="center"
+        android:imeOptions="actionNext"
+        android:inputType="textCapCharacters"
+        android:maxLength="1"
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="@+id/letra1"
+        app:layout_constraintEnd_toStartOf="@+id/letra4"
+        app:layout_constraintStart_toEndOf="@+id/letra2"
+        app:layout_constraintTop_toTopOf="@+id/letra1"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler"
+        android:layout_width="251dp"
+        android:layout_height="99dp"
+        android:layout_marginTop="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.596" />
 
     <TextView
         android:id="@+id/counter"

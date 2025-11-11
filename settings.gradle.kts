@@ -9,6 +9,8 @@ pluginManagement {
         }
         mavenCentral()
         gradlePluginPortal()
+        // AÑADE ESTA LÍNEA OTRA VEZ
+        maven { url = uri("https://jitpack.io") }
     }
 }
 dependencyResolutionManagement {
@@ -17,8 +19,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
-}
 
-rootProject.name = "Wordle"
-include(":app")
- 
+    rootProject.name = "Wordle"
+    include(":app")
+}

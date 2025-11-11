@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <!-- El TextView para el título (esto está bien) -->
+    <TextView
+        android:id="@+id/colorPickerTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/select_custom_color_title"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"
+        android:textColor="?android:attr/textColorPrimary" />
+
+    <!--
+      ¡BLOQUE CORREGIDO!
+      Ahora usamos los atributos ESPECÍFICOS de HSL para
+      definir cada rueda por separado y sus desplazamientos.
+    -->
+    <com.madrapps.pikolo.HSLColorPicker
+        android:id="@+id/color_picker"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_gravity="center_horizontal"
+
+    app:indicator_radius="12dp"
+
+    app:hue_arc_length="360"
+    app:hue_arc_width="25dp"
+    app:hue_radius_offset="0dp"
+
+    app:saturation_arc_length="360"
+    app:saturation_arc_width="25dp"
+    app:saturation_radius_offset="35dp"
+
+    app:lightness_arc_length="360"
+    app:lightness_arc_width="25dp"
+    app:lightness_radius_offset="70dp"
+    />
+
+</LinearLayout>

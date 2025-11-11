@@ -41,4 +41,9 @@
     <string name="music_option_alt_1">Music 1</string>
     <string name="music_option_alt_2">Music 2</string>
     <string name="music_option_none">Silence</string>
+
+    <!--OPCIONES DE BACKGROUND-->
+    <string name="select_custom_color_title">Choose a color</string>
+    <string name="bg_option_gif_1">GIF Animado 1</string>
+    <string name="bg_option_gif_2">GIF Animado 2</string>
 </resources>

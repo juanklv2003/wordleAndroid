@@ -8,6 +8,8 @@ material = "1.13.0"
 activity = "1.11.0"
 constraintlayout = "2.2.1"
 recyclerview = "1.4.0"
+# AÑADE LA VERSIÓN DE KOTLIN
+kotlin = "1.9.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -21,4 +23,6 @@ recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-
+# AÑADE ESTOS DOS ALIAS USANDO camelCase
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlinKapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }

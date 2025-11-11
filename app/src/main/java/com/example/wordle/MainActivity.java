@@ -34,6 +34,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import android.content.Intent;
+
 
 // ¡NUEVOS IMPORTS PARA LA LIBRERÍA PIKOLO!
 import com.madrapps.pikolo.HSLColorPicker; // Necesitarás este si quieres el comportamiento HSL
@@ -64,13 +66,15 @@ public class MainActivity extends AppCompatActivity {
 
     private ConstraintLayout mainLayout;
     private ImageView fondoImageView;
+    private boolean isChangingLanguage = false;
+
 
     // --- Variables de Configuración ---
     private MediaPlayer mediaPlayer;
     private String currentLangCode = "es";
     private int currentMusicResId = R.raw.musica_fondo;
     private String currentFondoKey = "DEFAULT";
-    private int currentColorPickerSelection = Color.BLACK; // ¡NUEVA VARIABLE para guardar el color seleccionado del picker!
+    private int currentColorPickerSelection = Color.BLACK;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,14 +82,13 @@ public class MainActivity extends AppCompatActivity {
 
         cargarIdiomaGuardado();
         cargarMusicaGuardada();
-        cargarFondoGuardado(); // Esto cargará currentFondoKey
+        cargarFondoGuardado();
 
-        // Si currentFondoKey es un #hex, úsalo como color inicial para el picker
         if (currentFondoKey.startsWith("#")) {
             try {
                 currentColorPickerSelection = Color.parseColor(currentFondoKey);
             } catch (IllegalArgumentException e) {
-                currentColorPickerSelection = Color.BLACK; // Color por defecto si el guardado es inválido
+                currentColorPickerSelection = Color.BLACK;
             }
         }
 
@@ -96,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
 
-        aplicarFondo(currentFondoKey); // Esto aplicará el fondo previamente cargado
+        aplicarFondo(currentFondoKey);
 
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
@@ -114,8 +117,14 @@ public class MainActivity extends AppCompatActivity {
         } else {
             actualizarScore();
             actualizarVidas();
+            if (adapter != null) {
+                adapter.notifyDataSetChanged();
+            }
+
         }
     }
+
+    //metodos
 
     private void initViews() {
         mainLayout = findViewById(R.id.main);
@@ -136,7 +145,6 @@ public class MainActivity extends AppCompatActivity {
         record.setText(R.string.label_record_empty);
     }
 
-    // --- MANEJO DEL MENÚ ---
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -216,22 +224,17 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ¡MODIFICADO! Diálogo de Fondo con la opción de Rueda de Color
     private void mostrarDialogoFondo() {
-        // Los nombres de los fondos (usando strings.xml)
         final String[] nombresFondo = {
                 getString(R.string.select_custom_color_title),
                 getString(R.string.bg_option_gif_1),
                 getString(R.string.bg_option_gif_2)
-                // Aquí podrías añadir "DEFAULT" o "DARK" si los quieres en el diálogo
         };
 
-        // Las "Keys" que guardaremos
         final String[] keysFondo = {
-                "PICKER", // Key especial para abrir la rueda
+                "PICKER",
                 "GIF_1",
                 "GIF_2"
-                // Correspondencia con los nombresFondo
         };
 
         new AlertDialog.Builder(this)
@@ -240,10 +243,8 @@ public class MainActivity extends AppCompatActivity {
                     String keySeleccionada = keysFondo[which];
 
                     if (keySeleccionada.equals("PICKER")) {
-                        // Si eligen la rueda, abrimos el selector de color
                         abrirSelectorColor();
                     } else {
-                        // Si eligen un preset (GIF)
                         guardarFondo(keySeleccionada);
                         aplicarFondo(keySeleccionada);
                     }
@@ -251,30 +252,23 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ¡RE-ESCRITO DE NUEVO! Método que abre la Rueda de Colores usando Pikolo
+    //metodo rueda de colores
     private void abrirSelectorColor() {
-        // Inflar el layout que contiene el HSLColorPicker
         View colorPickerView = LayoutInflater.from(this).inflate(R.layout.dialog_color_picker, null);
         final HSLColorPicker colorPicker = colorPickerView.findViewById(R.id.color_picker);
 
-        // Variable temporal para almacenar el color seleccionado en el listener
-        // Se inicializa con el color actual del picker
         final int[] tempSelectedColor = {currentColorPickerSelection};
 
-        // Establecer el color inicial del picker al último color seleccionado o al actual del fondo
         colorPicker.setColor(currentColorPickerSelection);
 
-        // *** ¡IMPORTANTE! Aquí se añade el listener para obtener el color. ***
         colorPicker.setColorSelectionListener(new SimpleColorSelectionListener() {
             @Override
             public void onColorSelected(int color) {
-                // Este método se llama cada vez que el usuario arrastra el selector.
-                // Guardamos el color en nuestra variable temporal.
+
                 tempSelectedColor[0] = color;
             }
         });
 
-        // Construir y mostrar el diálogo
         new AlertDialog.Builder(this)
                 .setTitle(R.string.select_custom_color_title) // Título para tu selector de color
                 .setView(colorPickerView)
@@ -292,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    // --- LÓGICA DE IDIOMA, MÚSICA Y FONDO ---
 
     private void guardarIdioma(String codigoIdioma) {
         SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
@@ -306,10 +299,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cambiarIdioma(String codigoIdioma) {
+        // 1. Guarda la nueva config de idioma (ej. "en")
         guardarIdioma(codigoIdioma);
         currentLangCode = codigoIdioma;
-        recreate();
+
+        // 2. ¡LA CLAVE! Activamos la bandera
+        isChangingLanguage = true;
+
+        // 3. (Opcional pero recomendado) Borra el estado del juego AHORA
+        SharedPreferences prefsJuego = getSharedPreferences("WORDLE_DATA", MODE_PRIVATE);
+        prefsJuego.edit().clear().apply();
+
+
+        // 4. Reinicia la actividad de forma manual (mucho más seguro que recreate())
+        finish();
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        overridePendingTransition(0, 0);
     }
+
 
     private void establecerIdioma(String codigoIdioma) {
         Locale locale = new Locale(codigoIdioma);
@@ -349,20 +357,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // ¡MODIFICADO! Guarda el fondo como String (Key o Hex)
     private void guardarFondo(String fondoKey) {
         currentFondoKey = fondoKey;
         SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
         prefs.edit().putString("fondo_key", fondoKey).apply();
     }
 
-    // ¡MODIFICADO! Carga el fondo guardado (String)
     private void cargarFondoGuardado() {
         SharedPreferences prefs = getSharedPreferences("WORDLE_PREFS", MODE_PRIVATE);
         currentFondoKey = prefs.getString("fondo_key", "DEFAULT");
     }
 
-    // ¡MODIFICADO! Aplica el fondo usando Glide (GIFs) o Color (Hex)
     private void aplicarFondo(String fondoKey) {
         if (fondoImageView == null) return;
 
@@ -398,8 +403,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // --- MÉTODOS DEL JUEGO (TRADUCIDOS) ---
-    // ... (El resto de tus métodos de juego, sin cambios)
     private void showCustomToast(String message) {
         LayoutInflater inflater = getLayoutInflater();
         View layout = inflater.inflate(R.layout.custom_toast,
@@ -701,7 +704,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        guardarEstado();
+        if (!isChangingLanguage) {
+            guardarEstado();
+        }
         if (mediaPlayer != null && mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
         }
@@ -726,12 +731,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void guardarEstado() {
+        if (isChangingLanguage) {
+            return;
+        }
+
         SharedPreferences prefs = getSharedPreferences("WORDLE_DATA", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
+
         editor.putString("palabraSecreta", palabraSecreta);
         editor.putInt("puntuacion", intentos);
         editor.putInt("vidas", vidas);
-        editor.putString("idioma_estado", currentLangCode);
         Gson gson = new Gson();
         String jsonIntentos = gson.toJson(listaIntentos);
         editor.putString("intentos", jsonIntentos);
@@ -740,31 +749,22 @@ public class MainActivity extends AppCompatActivity {
 
     private void cargarEstado() {
         SharedPreferences prefs = getSharedPreferences("WORDLE_DATA", MODE_PRIVATE);
-        String idiomaGuardado = prefs.getString("idioma_estado", currentLangCode);
 
-        if (idiomaGuardado.equals(currentLangCode)) {
-            palabraSecreta = prefs.getString("palabraSecreta", null);
-            intentos = prefs.getInt("puntuacion", 0);
-            vidas = prefs.getInt("vidas", 6);
-            String jsonIntentos = prefs.getString("intentos", null);
-            if (jsonIntentos != null) {
-                Gson gson = new Gson();
-                Type type = new TypeToken<ArrayList<Attempt>>() {}.getType();
-                ArrayList<Attempt> cargados = gson.fromJson(jsonIntentos, type);
-                listaIntentos.clear();
+        // Simplemente cargamos lo que haya.
+        // Si el archivo fue borrado por cambiarIdioma(), todo será default (null, 0, 6)
+        palabraSecreta = prefs.getString("palabraSecreta", null);
+        intentos = prefs.getInt("puntuacion", 0);
+        vidas = prefs.getInt("vidas", 6);
+        String jsonIntentos = prefs.getString("intentos", null);
+
+        listaIntentos.clear();
+        if (jsonIntentos != null) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<Attempt>>() {}.getType();
+            ArrayList<Attempt> cargados = gson.fromJson(jsonIntentos, type);
+            if (cargados != null) {
                 listaIntentos.addAll(cargados);
             }
-        } else {
-            palabraSecreta = null;
-            intentos = 0;
-            vidas = 6;
-            listaIntentos.clear();
         }
-
-        if (adapter != null) {
-            adapter.notifyDataSetChanged();
-        }
-        actualizarVidas();
-        actualizarScore();
     }
 }

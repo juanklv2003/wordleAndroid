@@ -40,10 +40,15 @@
     <string name="music_option_default">Main Music</string>
     <string name="music_option_alt_1">Music 1</string>
     <string name="music_option_alt_2">Music 2</string>
+    <string name="snakeeater">Snake Eater</string>
+    <string name="pez_frances">le fiche</string>
+    <string name="free_bird">free bird</string>
     <string name="music_option_none">Silence</string>
 
     <!--OPCIONES DE BACKGROUND-->
     <string name="select_custom_color_title">Choose a color</string>
-    <string name="bg_option_gif_1">GIF Animado 1</string>
-    <string name="bg_option_gif_2">GIF Animado 2</string>
+    <string name="bg_option_gif_1">Spinner Cat</string>
+    <string name="bg_option_gif_2">Elmo Fire</string>
+    <string name="bg_option_gif_3">Spinner fish</string>
+    <string name="bg_option_gif_4">Spinner rat</string>
 </resources>

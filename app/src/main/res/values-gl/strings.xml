@@ -40,10 +40,15 @@
     <string name="music_option_default">Música Principal</string>
     <string name="music_option_alt_1">Canción 1</string>
     <string name="music_option_alt_2">Canción 2</string>
+    <string name="snakeeater">Snake Eater</string>
+    <string name="pez_frances">le fiche</string>
+    <string name="free_bird">free bird</string>
     <string name="music_option_none">Silencio</string>
 
     <!--OPCIONES DE BACKGROUND-->
     <string name="select_custom_color_title">Elixe unha cor</string>
-    <string name="bg_option_gif_1">GIF Animado 1</string>
-    <string name="bg_option_gif_2">GIF Animado 2</string>
+    <string name="bg_option_gif_1">Gato xiratorio</string>
+    <string name="bg_option_gif_2">Elmo en llamas</string>
+    <string name="bg_option_gif_3">Pez Giratorio</string>
+    <string name="bg_option_gif_4">Rata Giratoria</string>
 </resources>

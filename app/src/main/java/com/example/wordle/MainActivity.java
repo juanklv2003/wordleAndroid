@@ -203,12 +203,18 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.music_option_default),
                 getString(R.string.music_option_alt_1),
                 getString(R.string.music_option_alt_2),
+                getString(R.string.snakeeater),
+                getString(R.string.pez_frances),
+                getString(R.string.free_bird),
                 getString(R.string.music_option_none)
         };
         final int[] resIdsMusica = {
                 R.raw.musica_fondo,
                 R.raw.musica_alternativa1,
                 R.raw.musica_alternativa2,
+                R.raw.snakeeater,
+                R.raw.lefishe,
+                R.raw.freebird,
                 0
         };
 
@@ -228,13 +234,17 @@ public class MainActivity extends AppCompatActivity {
         final String[] nombresFondo = {
                 getString(R.string.select_custom_color_title),
                 getString(R.string.bg_option_gif_1),
-                getString(R.string.bg_option_gif_2)
+                getString(R.string.bg_option_gif_2),
+                getString(R.string.bg_option_gif_3),
+                getString(R.string.bg_option_gif_4),
         };
 
         final String[] keysFondo = {
                 "PICKER",
                 "GIF_1",
-                "GIF_2"
+                "GIF_2",
+                "GIF_3",
+                "GIF_4"
         };
 
         new AlertDialog.Builder(this)
@@ -273,7 +283,6 @@ public class MainActivity extends AppCompatActivity {
                 .setTitle(R.string.select_custom_color_title) // Título para tu selector de color
                 .setView(colorPickerView)
                 .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    // Al pulsar OK, usamos el último color almacenado en tempSelectedColor
                     int finalSelectedColor = tempSelectedColor[0];
                     currentColorPickerSelection = finalSelectedColor; // Guardar para la próxima vez que se abra el picker
                     String hexColor = String.format("#%06X", (0xFFFFFF & finalSelectedColor));
@@ -299,19 +308,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cambiarIdioma(String codigoIdioma) {
-        // 1. Guarda la nueva config de idioma (ej. "en")
         guardarIdioma(codigoIdioma);
         currentLangCode = codigoIdioma;
 
-        // 2. ¡LA CLAVE! Activamos la bandera
         isChangingLanguage = true;
 
-        // 3. (Opcional pero recomendado) Borra el estado del juego AHORA
         SharedPreferences prefsJuego = getSharedPreferences("WORDLE_DATA", MODE_PRIVATE);
         prefsJuego.edit().clear().apply();
 
 
-        // 4. Reinicia la actividad de forma manual (mucho más seguro que recreate())
         finish();
         Intent intent = new Intent(this, MainActivity.class);
         startActivity(intent);
@@ -385,20 +390,31 @@ public class MainActivity extends AppCompatActivity {
             }
 
         } else if (fondoKey.equals("GIF_1")) {
-            // Es el GIF 1 (Asegúrate que 'gif_fondo_1.gif' está en res/drawable)
             Glide.with(this)
                     .asGif()
-                    .load(R.drawable.gif_1)
+                    .load(R.drawable.gato_giratorio)
                     .into(fondoImageView);
 
         } else if (fondoKey.equals("GIF_2")) {
-            // Es el GIF 2 (Asegúrate que 'gif_fondo_2.gif' está en res/drawable)
             Glide.with(this)
                     .asGif()
                     .load(R.drawable.gif_2)
                     .into(fondoImageView);
 
-        } else { // Si es "DEFAULT" o cualquier otra key no reconocida, o un color inválido
+        } else if (fondoKey.equals("GIF_3")) {
+        Glide.with(this)
+                .asGif()
+                .load(R.drawable.pez)
+                .into(fondoImageView);
+
+
+        } else if (fondoKey.equals("GIF_4")) {
+        Glide.with(this)
+                .asGif()
+                .load(R.drawable.rat)
+                .into(fondoImageView);
+
+        }else {
             fondoImageView.setImageResource(R.drawable.fondo_default);
         }
     }

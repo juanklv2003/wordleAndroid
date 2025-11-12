@@ -30,13 +30,6 @@
         app:layout_constraintTop_toTopOf="parent"
         android:background="@android:color/transparent">
 
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolbar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/EstiloMenuDesplegableBlanco" />
     </com.google.android.material.appbar.AppBarLayout>
 
     <TextView
@@ -168,5 +161,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.867" />
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@android:color/transparent"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/fondoImageView"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/fondoImageView"
+        app:layout_constraintTop_toTopOf="@+id/fondoImageView"
+        app:layout_constraintVertical_bias="0.056"
+        app:popupTheme="@style/EstiloMenuDesplegableBlanco" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
